@@ -1,41 +1,41 @@
-// import * as rtfToHTML from "@iarna/rtf-to-html";
 const rtfToHTML = require("@iarna/rtf-to-html");
 const ZIP = require("zip");
 
 (async () => {
     const out = document.querySelector("#out");
-    out.append(`fetching\n`);
+    const status = document.querySelector("#status");
+    status.textContent = "fetching...";
     const response = await fetch(location.hash.slice(1));
 
-    out.append(`streaming\n`);
+    status.textContent = "streaming...";
     let raw = await response.blob();
     raw = await raw.arrayBuffer();
     raw = new DataView(raw);
 
     // assert ASCII only (easier than checking real <?xml?> encoding)
-    out.append(`checking encoding\n`);
+    status.textContent = "checking encoding...";
     if (false)
     for (let i = 0; i < raw.byteLength; i++)
         if (raw.getUint8(i) >= 0x80)
             throw new Error("assertion failed: file has non-ASCII bytes");
 
-    out.append(`parsing xml\n`);
+    status.textContent = "parsing xml...";
     // let text = await response.text();
     let text = new TextDecoder().decode(raw.buffer);
     let doc = new DOMParser().parseFromString(text, "text/xml");
 
-    out.append(`searching for embedded files\n`);
-    searchForRtfBlobs(doc.documentElement);
+    status.textContent = "searching for embedded files...";
+    searchForEmbeddedFiles(doc.documentElement);
 
-    out.append(`rendering xml tree\n`);
+    status.textContent = "rendering xml tree...";
     const ul = document.createElement("ul");
     ul.className = "tree";
     out.append(ul);
     renderXmlTree(doc.documentElement, ul);
 
-    out.append(`done!\n`);
+    status.textContent = "done!";
 
-    function searchForRtfBlobs(node) {
+    function searchForEmbeddedFiles(node) {
         if (node.nodeName == "#text") {
             if (/^[{]\\rtf/.test(node.nodeValue)) {
                 out.append(`rtf `);
@@ -75,7 +75,7 @@ const ZIP = require("zip");
             return;
         }
         for (const kid of node.childNodes) {
-            searchForRtfBlobs(kid);
+            searchForEmbeddedFiles(kid);
         }
     }
 
@@ -134,7 +134,6 @@ const ZIP = require("zip");
 
     function addRtfDocument(name, data) {
         const iframe = document.querySelector("#viewer > iframe");
-        console.log(iframe.src);
         const a = document.createElement("a");
         a.append(name);
         out.append(a, `\n`);
@@ -175,7 +174,6 @@ const ZIP = require("zip");
 
     function addImageDocument(name, data, type, zipped) {
         const iframe = document.querySelector("#viewer > iframe");
-        console.log(iframe.src);
         const a = document.createElement("a");
         a.append(name);
         out.append(a, `\n`);

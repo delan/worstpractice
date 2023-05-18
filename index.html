@@ -1,5 +1,6 @@
 <!doctype html><meta charset="utf-8">
-<pre id="out"></pre>
+<pre id="out">status: <span id="status"></span>
+</pre>
 <!-- explicit about:blank prevents nesting on reload -->
 <div id="viewer"><iframe src="about:blank"></iframe></div>
 <style>
@@ -22,6 +23,9 @@
         flex: 1 0 0;
         margin: 0;
         overflow-y: scroll;
+    }
+    #status {
+        font-weight: bold;
     }
     #viewer {
         flex: 1 0 0;
