@@ -24,14 +24,16 @@ const ZIP = require("zip");
     let text = new TextDecoder().decode(raw.buffer);
     let doc = new DOMParser().parseFromString(text, "text/xml");
 
-    out.append(`<${doc.documentElement.nodeName}>\n\t`);
-    for (const kid of doc.documentElement.children)
-        out.append(`${kid.nodeName} `);
-    out.append(`\n`);
-
     out.append(`searching for embedded files\n`);
     searchForRtfBlobs(doc.documentElement);
-    addImageDocument(`document`, new XMLSerializer().serializeToString(doc), "text/xml", false);
+
+    out.append(`rendering xml tree\n`);
+    const ul = document.createElement("ul");
+    ul.className = "tree";
+    out.append(ul);
+    renderXmlTree(doc.documentElement, ul);
+
+    out.append(`done!\n`);
 
     function searchForRtfBlobs(node) {
         if (node.nodeName == "#text") {
@@ -74,6 +76,59 @@ const ZIP = require("zip");
         }
         for (const kid of node.childNodes) {
             searchForRtfBlobs(kid);
+        }
+    }
+
+    function renderXmlTree(node, parent = out) {
+        if (node.nodeType != Node.ELEMENT_NODE) {
+            return;
+        }
+
+        const li = document.createElement("li");
+        li.append(node.nodeName);
+        parent.append(li);
+
+        if (isVoid(node)) {
+            // mark as verbose
+            li.className = "verbose";
+        } else if (isAtom(node)) {
+            // mark as verbose if “NIL” or effectively empty
+            if (["NIL", ""].includes(node.textContent.trim()))
+                li.className = "verbose";
+
+            // render as atom, for example, BPSVersion(1.12.0.998)
+            const value = document.createElement("span");
+            value.className = "value";
+            value.append(node.textContent.trim());
+            li.append(`(`, value, `)`);
+        } else {
+            const smallList = document.createElement("ul");
+            smallList.className = "small";
+            li.append(smallList);
+            let needsBigList = false;
+            for (const kid of node.childNodes) {
+                if (isVoid(kid) || isAtom(kid)) {
+                    renderXmlTree(kid, smallList);
+                } else {
+                    needsBigList = true;
+                }
+            }
+            if (needsBigList) {
+                const bigList = document.createElement("ul");
+                li.append(bigList);
+                for (const kid of node.childNodes) {
+                    if (!isVoid(kid) && !isAtom(kid)) {
+                        renderXmlTree(kid, bigList);
+                    }
+                }
+            }
+        }
+
+        function isVoid(node) {
+            return node.childNodes.length == 0;
+        }
+        function isAtom(node) {
+            return node.childNodes.length == 1 && node.childNodes[0].nodeName == "#text";
         }
     }
 
