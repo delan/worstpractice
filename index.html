@@ -1,14 +1,63 @@
 <!doctype html><meta charset="utf-8">
-<pre id="out">status: <span id="status"></span>
-</pre>
+<nav>
+    <div id="tabLine"></div>
+
+    <input type="radio" name="tab" id="importTab" checked>
+    <label for="importTab">import</label>
+    <div class="page" id="import">
+        <header>
+            <h1>worstpractice</h1>
+            viewer for XML patient records from Best Practice (Bp Premier)
+        </header>
+        <ol>
+            <li>drag and drop a patient record (or click <strong>browse</strong>)
+            <li>click <strong>tree</strong> to view general XML patient data
+            <li>click <strong>files</strong> to view embedded document files
+        </ol>
+        <input id="file" type="file">
+        <div>status: <span id="status"></span></div>
+    </div>
+
+    <input type="radio" name="tab" id="treeTab">
+    <label for="treeTab">tree</label>
+    <pre class="page" id="tree"></pre>
+
+    <input type="radio" name="tab" id="filesTab">
+    <label for="filesTab">files</label>
+    <pre class="page" id="files"></pre>
+</nav>
 <!-- explicit about:blank prevents nesting on reload -->
 <div id="viewer"><iframe src="about:blank"></iframe></div>
 <style>
+    @font-face {
+        font-family: Atkinson Hyperlegible;
+        src: url(static/Atkinson-Hyperlegible-Regular-102.ttf);
+        font-weight: normal;
+        font-style: normal;
+    }
+    @font-face {
+        font-family: Atkinson Hyperlegible;
+        src: url(static/Atkinson-Hyperlegible-Bold-102.ttf);
+        font-weight: bold;
+        font-style: normal;
+    }
+    @font-face {
+        font-family: Atkinson Hyperlegible;
+        src: url(static/Atkinson-Hyperlegible-Italic-102.ttf);
+        font-weight: normal;
+        font-style: italic;
+    }
+    @font-face {
+        font-family: Atkinson Hyperlegible;
+        src: url(static/Atkinson-Hyperlegible-BoldItalic-102.ttf);
+        font-weight: bold;
+        font-style: italic;
+    }
     * {
         box-sizing: border-box;
     }
     :root {
-        font-size: 1.5em;
+        font: 1.5em Atkinson Hyperlegible;
     }
     body {
         display: flex;
@@ -17,15 +66,57 @@
         padding: 1em;
         height: 100vh;
     }
-    #out {
+    header {
+        margin-top: 1em;
+        text-align: center;
+    }
+    header > h1 {
+        font-size: 3em;
+        margin: 0;
+    }
+    nav {
+        --tab-border: 1px;
+        --tab-padding: 0.25em;
+        --tab-lh: 1;
+        --tab-height: calc(/* 1lh */ var(--tab-lh) * 1em + 2 * var(--tab-padding) + 2 * var(--tab-border));
+
+        flex: 1 0 0;
+        position: relative;
+    }
+    nav > input {
+        display: none;
+    }
+    nav > label {
+        display: inline-block;
+        border: var(--tab-border) solid black;
+        padding: var(--tab-padding);
+        line-height: var(--tab-lh);
+        position: relative;
+    }
+    nav > .page {
+        display: none;
+        position: absolute;
+        inset: var(--tab-height) 0 0 0;
+        overflow-y: scroll;
+    }
+    nav > pre.page {
         white-space: pre-wrap;
         font-family: monospace, monospace;
-        flex: 1 0 0;
         margin: 0;
-        overflow-y: scroll;
+    }
+    nav > :checked + label {
+        border-bottom-color: white;
+    }
+    nav > :checked + label + * {
+        display: block;
     }
     #status {
         font-weight: bold;
+    }
+    #tabLine {
+        position: absolute;
+        inset: calc(var(--tab-height) - var(--tab-border)) 0 auto 0;
+        border-bottom: 1px solid black;
     }
     #viewer {
         flex: 1 0 0;

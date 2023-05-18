@@ -2,46 +2,62 @@ import {EMFJS, WMFJS, RTFJS} from "rtf.js";
 const ZIP = require("zip");
 
 (async () => {
-    const out = document.querySelector("#out");
+    // in case firefox tries to restore selected tab
+    document.querySelector("#importTab").click();
+
     const status = document.querySelector("#status");
-    status.textContent = "fetching...";
-    const response = await fetch(location.hash.slice(1));
 
-    status.textContent = "streaming...";
-    let raw = await response.blob();
-    raw = await raw.arrayBuffer();
-    raw = new DataView(raw);
+    // status.textContent = "fetching...";
+    // const response = await fetch(location.hash.slice(1));
 
-    // assert ASCII only (easier than checking real <?xml?> encoding)
-    status.textContent = "checking encoding...";
-    if (false)
-    for (let i = 0; i < raw.byteLength; i++)
-        if (raw.getUint8(i) >= 0x80)
-            throw new Error("assertion failed: file has non-ASCII bytes");
+    // status.textContent = "blobbing...";
+    // const blob = await response.blob();
+    // run(blob);
 
-    status.textContent = "parsing xml...";
-    // let text = await response.text();
-    let text = new TextDecoder().decode(raw.buffer);
-    let doc = new DOMParser().parseFromString(text, "text/xml");
+    const file = document.querySelector("#file");
+    file.addEventListener("change", change);
+    change();
 
-    status.textContent = "searching for embedded files...";
-    searchForEmbeddedFiles(doc.documentElement);
+    function change() {
+        if (file.files.length > 0)
+            run(file.files[0]);
+    }
 
-    status.textContent = "rendering xml tree...";
-    const ul = document.createElement("ul");
-    ul.className = "tree";
-    out.append(ul);
-    renderXmlTree(doc.documentElement, ul);
+    async function run(blob) {
+        status.textContent = "loading...";
+        let raw = await blob.arrayBuffer();
+        raw = new DataView(raw);
 
-    status.textContent = "done!";
+        // assert ASCII only (easier than checking real <?xml?> encoding)
+        status.textContent = "checking encoding...";
+        for (let i = 0; i < raw.byteLength; i++)
+            if (raw.getUint8(i) >= 0x80)
+                throw new Error("assertion failed: file has non-ASCII bytes");
 
-    function searchForEmbeddedFiles(node) {
+        status.textContent = "parsing xml...";
+        // let text = await response.text();
+        let text = new TextDecoder().decode(raw.buffer);
+        let doc = new DOMParser().parseFromString(text, "text/xml");
+
+        status.textContent = "searching for embedded files...";
+        searchForEmbeddedFiles(doc.documentElement, document.querySelector("#files"));
+
+        status.textContent = "rendering xml tree...";
+        const ul = document.createElement("ul");
+        ul.className = "tree";
+        document.querySelector("#tree").append(ul);
+        renderXmlTree(doc.documentElement, ul);
+
+        status.textContent = "done!";
+    }
+
+    function searchForEmbeddedFiles(node, parent) {
         if (node.nodeName == "#text") {
             if (/^[{]\\rtf/.test(node.nodeValue)) {
-                out.append(`rtf `);
+                parent.append(`rtf `);
                 const buffer = Buffer.from(node.nodeValue, "utf8");
                 node.nodeValue = "";
-                addRtfDocument(getPath(node), buffer);
+                addRtfDocument(parent, getPath(node), buffer);
                 return;
             }
             // note: Content with DocType is base64, CONTENT with DOCTYPE is not
@@ -52,20 +68,20 @@ const ZIP = require("zip");
                 content.textContent = "";
                 switch (node.nodeValue) {
                     case "RTF ":
-                        out.append(`rtf.base64 `);
-                        addRtfDocument(name, buffer);
+                        parent.append(`rtf.base64 `);
+                        addRtfDocument(parent, name, buffer);
                         break;
                     case "BMP ":
-                        out.append(`bmp.zip.base64 `);
-                        addImageDocument(name, buffer, "image/bmp", true);
+                        parent.append(`bmp.zip.base64 `);
+                        addImageDocument(parent, name, buffer, "image/bmp", true);
                         break;
                     case "JPG ":
-                        out.append(`jpg.zip.base64 `);
-                        addImageDocument(name, buffer, "image/jpeg", true);
+                        parent.append(`jpg.zip.base64 `);
+                        addImageDocument(parent, name, buffer, "image/jpeg", true);
                         break;
                     case "PDF ":
-                        out.append(`pdf.zip.base64 `);
-                        addImageDocument(name, buffer, "application/pdf", true);
+                        parent.append(`pdf.zip.base64 `);
+                        addImageDocument(parent, name, buffer, "application/pdf", true);
                         break;
                     default:
                         console.log(node.nodeValue);
@@ -76,11 +92,11 @@ const ZIP = require("zip");
             return;
         }
         for (const kid of node.childNodes) {
-            searchForEmbeddedFiles(kid);
+            searchForEmbeddedFiles(kid, parent);
         }
     }
 
-    function renderXmlTree(node, parent = out) {
+    function renderXmlTree(node, parent) {
         if (node.nodeType != Node.ELEMENT_NODE) {
             return;
         }
@@ -133,11 +149,11 @@ const ZIP = require("zip");
         }
     }
 
-    function addRtfDocument(name, buffer) {
+    function addRtfDocument(parent, name, buffer) {
         const iframe = document.querySelector("#viewer > iframe");
         const a = document.createElement("a");
         a.append(name);
-        out.append(a, `\n`);
+        parent.append(a, `\n`);
         a.href = "#";
         a.addEventListener("click", async event => {
             event.preventDefault();
@@ -171,11 +187,11 @@ const ZIP = require("zip");
         });
     }
 
-    function addImageDocument(name, buffer, type, zipped) {
+    function addImageDocument(parent, name, buffer, type, zipped) {
         const iframe = document.querySelector("#viewer > iframe");
         const a = document.createElement("a");
         a.append(name);
-        out.append(a, `\n`);
+        parent.append(a, `\n`);
         a.href = "#";
         a.addEventListener("click", event => {
             event.preventDefault();
