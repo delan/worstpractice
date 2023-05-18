@@ -10,6 +10,7 @@
   "devDependencies": {
     "@iarna/rtf-to-html": "1.1.0",
     "browserify": "17.0.0",
-    "esbuild": "0.17.19"
+    "esbuild": "0.17.19",
+    "zip": "1.2.0"
   }
 }
