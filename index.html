@@ -7,7 +7,8 @@
     <div class="page" id="import">
         <header>
             <h1>worstpractice</h1>
-            viewer for XML patient records from Best Practice (Bp Premier)
+            <div>viewer for XML patient records from Best Practice (Bp Premier)</div>
+            <div><em>(nothing is sent over the network! see for yourself <a href="https://github.com/delan/worstpractice">on github</a>)</em></div>
         </header>
         <ol>
             <li>drag and drop a patient record below
@@ -119,6 +120,7 @@
         flex-flow: column nowrap;
     }
     #import > * {
+        margin: 0;
         margin-top: 1em;
     }
     #file {
