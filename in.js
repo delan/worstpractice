@@ -2,30 +2,64 @@ import {EMFJS, WMFJS, RTFJS} from "rtf.js";
 const ZIP = require("zip");
 
 (async () => {
-    // in case firefox tries to restore selected tab
+    // in case firefox tries to restore selected tab or file
     document.querySelector("#importTab").click();
+    document.querySelector("#file").value = "";
 
+    const filename = document.querySelector("#filename");
     const status = document.querySelector("#status");
-
-    // status.textContent = "fetching...";
-    // const response = await fetch(location.hash.slice(1));
-
-    // status.textContent = "blobbing...";
-    // const blob = await response.blob();
-    // run(blob);
 
     const file = document.querySelector("#file");
     file.addEventListener("change", change);
     change();
 
-    function change() {
-        if (file.files.length > 0)
-            run(file.files[0]);
+    // prevent accidental dropping of files outside drop zone
+    ["drop", "dragover"].forEach(x => document.documentElement.addEventListener(x, event => {
+        event.preventDefault();
+    }));
+
+    const dnd = document.querySelector("#dnd");
+    dnd.addEventListener("drop", event => {
+        event.preventDefault();
+        dnd.classList.remove("over");
+        if (event.dataTransfer.items) {
+            for (const item of event.dataTransfer.items) {
+                if (item.kind != "file") continue;
+                run(item.getAsFile());
+                break;
+            }
+        } else {
+            for (const file of event.dataTransfer.files) {
+                run(file);
+                break;
+            }
+        }
+    });
+    dnd.addEventListener("dragover", event => {
+        event.preventDefault();
+        dnd.classList.add("over");
+    });
+    dnd.addEventListener("dragleave", event => {
+        dnd.classList.remove("over");
+    });
+    dnd.addEventListener("click", () => {
+        file.click();
+    });
+
+    async function change() {
+        try {
+            if (file.files.length > 0)
+                await run(file.files[0]);
+        } catch (_) {}
+
+        // reset field to allow picking same file twice
+        file.value = "";
     }
 
-    async function run(blob) {
+    async function run(file) {
+        filename.textContent = file.name;
         status.textContent = "loading...";
-        let raw = await blob.arrayBuffer();
+        let raw = await file.arrayBuffer();
         raw = new DataView(raw);
 
         // assert ASCII only (easier than checking real <?xml?> encoding)

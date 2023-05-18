@@ -10,12 +10,16 @@
             viewer for XML patient records from Best Practice (Bp Premier)
         </header>
         <ol>
-            <li>drag and drop a patient record (or click <strong>browse</strong>)
+            <li>drag and drop a patient record below
             <li>click <strong>tree</strong> to view general XML patient data
             <li>click <strong>files</strong> to view embedded document files
         </ol>
+        <div>
+            filename: <span id="filename"></span>
+            <br>status: <span id="status"></span>
+        </div>
         <input id="file" type="file">
-        <div>status: <span id="status"></span></div>
+        <div id="dnd">drop XML file here<br>or click to browse</div>
     </div>
 
     <input type="radio" name="tab" id="treeTab">
@@ -110,7 +114,31 @@
     nav > :checked + label + * {
         display: block;
     }
-    #status {
+    #import {
+        display: flex;
+        flex-flow: column nowrap;
+    }
+    #import > * {
+        margin-top: 1em;
+    }
+    #file {
+        display: none;
+    }
+    #dnd {
+        flex: 1 0 0;
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: space-around;
+        text-align: center;
+        font-size: 2em;
+        border: 1rem dashed;
+        color: #808080;
+    }
+    #dnd.over {
+        color: rebeccapurple;
+    }
+    #filename, #status {
         font-weight: bold;
     }
     #tabLine {
