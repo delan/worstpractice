@@ -3,14 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build.old": "esbuild in.js --bundle --outfile=out.js",
-    "build": "browserify in.js > out.js",
+    "build": "browserify -p esmify in.js > out.js",
     "serve": "python3 -m http.server 4000"
   },
   "devDependencies": {
     "@iarna/rtf-to-html": "1.1.0",
     "browserify": "17.0.0",
-    "esbuild": "0.17.19",
+    "esmify": "2.1.1",
+    "rtf.js": "3.0.9",
     "zip": "1.2.0"
   }
 }

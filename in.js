@@ -1,4 +1,4 @@
-const rtfToHTML = require("@iarna/rtf-to-html");
+import {EMFJS, WMFJS, RTFJS} from "rtf.js";
 const ZIP = require("zip");
 
 (async () => {
@@ -39,32 +39,33 @@ const ZIP = require("zip");
         if (node.nodeName == "#text") {
             if (/^[{]\\rtf/.test(node.nodeValue)) {
                 out.append(`rtf `);
-                addRtfDocument(getPath(node), node.nodeValue);
+                const buffer = Buffer.from(node.nodeValue, "utf8");
                 node.nodeValue = "";
+                addRtfDocument(getPath(node), buffer);
                 return;
             }
             // note: Content with DocType is base64, CONTENT with DOCTYPE is not
             if (node.parentNode.nodeName == "DocType") {
                 const content = node.parentNode.parentNode.querySelector("Content");
                 const name = getPath(content);
-                const data = atob(content.textContent);
+                const buffer = Buffer.from(content.textContent, "base64");
                 content.textContent = "";
                 switch (node.nodeValue) {
                     case "RTF ":
                         out.append(`rtf.base64 `);
-                        addRtfDocument(name, data);
+                        addRtfDocument(name, buffer);
                         break;
                     case "BMP ":
                         out.append(`bmp.zip.base64 `);
-                        addImageDocument(name, data, "image/bmp", true);
+                        addImageDocument(name, buffer, "image/bmp", true);
                         break;
                     case "JPG ":
                         out.append(`jpg.zip.base64 `);
-                        addImageDocument(name, data, "image/jpeg", true);
+                        addImageDocument(name, buffer, "image/jpeg", true);
                         break;
                     case "PDF ":
                         out.append(`pdf.zip.base64 `);
-                        addImageDocument(name, data, "application/pdf", true);
+                        addImageDocument(name, buffer, "application/pdf", true);
                         break;
                     default:
                         console.log(node.nodeValue);
@@ -132,47 +133,45 @@ const ZIP = require("zip");
         }
     }
 
-    function addRtfDocument(name, data) {
+    function addRtfDocument(name, buffer) {
         const iframe = document.querySelector("#viewer > iframe");
         const a = document.createElement("a");
         a.append(name);
         out.append(a, `\n`);
         a.href = "#";
-        a.addEventListener("click", event => {
+        a.addEventListener("click", async event => {
             event.preventDefault();
-            try {
-                rtfToHTML.fromString(data, (e, result) => {
-                    if (e) throw e;
+            console.log(buffer, buffer.buffer);
+            const rtf = new RTFJS.Document(buffer.buffer);
+            console.log(rtf.metadata());
+            const elements = await rtf.render();
 
-                    const load = () => {
-                        console.log("load");
-                        iframe.onload = null;
-                        iframe.contentDocument.open();
+            const load = () => {
+                console.log("load");
+                iframe.onload = null;
+                iframe.contentDocument.open();
 
-                        // remove big margins for readability
-                        iframe.contentDocument.write(`<style>body { margin: 0 !important; }</style>`);
+                // remove big margins for readability
+                iframe.contentDocument.write(`<style>body { margin: 0 !important; }</style>`);
 
-                        iframe.contentDocument.write(result);
-                        iframe.contentDocument.close();
-                    };
+                iframe.contentDocument.close();
 
-                    if (iframe.contentDocument) {
-                        // already about:blank, so no load event
-                        load();
-                    } else {
-                        // not about:blank yet, so wait for load event
-                        iframe.onload = load;
-                        iframe.src = "about:blank";
-                    }
-                });
-            } catch (e) {
-                console.log(data);
-                throw e;
+                for (const element of elements)
+                    iframe.contentDocument.body.append(element);
+            };
+
+            if (iframe.contentDocument) {
+                // already about:blank, so no load event
+                load();
+            } else {
+                // not about:blank yet, so wait for load event
+                iframe.onload = load;
+                iframe.src = "about:blank";
             }
         });
     }
 
-    function addImageDocument(name, data, type, zipped) {
+    function addImageDocument(name, buffer, type, zipped) {
         const iframe = document.querySelector("#viewer > iframe");
         const a = document.createElement("a");
         a.append(name);
@@ -181,11 +180,10 @@ const ZIP = require("zip");
         a.addEventListener("click", event => {
             event.preventDefault();
             if (!zipped) {
-                iframe.src = makeBlobUrl(Buffer.from(data, "latin1"), type);
+                iframe.src = makeBlobUrl(buffer, type);
                 // URL.revokeObjectURL(iframe.src);
                 return;
             }
-            const buffer = Buffer.from(data, "latin1");
             const reader = ZIP.Reader(buffer);
             reader.toObject("latin1");
             reader.forEach(entry => {
