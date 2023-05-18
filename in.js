@@ -149,57 +149,53 @@ const ZIP = require("zip");
         }
     }
 
+    function getViewerIframe() {
+        // in chrome, image → rtf navigations in iframes seem to be buggy,
+        // so destroy and create the iframe anew each time we view something
+        const viewer = document.querySelector("#viewer");
+        viewer.innerHTML = `<iframe src="about:blank"></iframe>`;
+        return viewer.firstChild;
+    }
+
     function addRtfDocument(parent, name, buffer) {
-        const iframe = document.querySelector("#viewer > iframe");
         const a = document.createElement("a");
         a.append(name);
         parent.append(a, `\n`);
         a.href = "#";
         a.addEventListener("click", async event => {
             event.preventDefault();
-            console.log(buffer, buffer.buffer);
             const rtf = new RTFJS.Document(buffer.buffer);
             console.log(rtf.metadata());
             const elements = await rtf.render();
 
-            const load = () => {
-                console.log("load");
-                iframe.onload = null;
-                iframe.contentDocument.open();
+            const iframe = getViewerIframe();
+            iframe.contentDocument.open();
 
-                // remove big margins for readability
-                iframe.contentDocument.write(`<style>body { margin: 0 !important; }</style>`);
+            // remove big margins for readability
+            iframe.contentDocument.write(`<style>body { margin: 0 !important; }</style>`);
 
-                iframe.contentDocument.close();
+            iframe.contentDocument.close();
 
-                for (const element of elements)
-                    iframe.contentDocument.body.append(element);
-            };
-
-            if (iframe.contentDocument) {
-                // already about:blank, so no load event
-                load();
-            } else {
-                // not about:blank yet, so wait for load event
-                iframe.onload = load;
-                iframe.src = "about:blank";
-            }
+            for (const element of elements)
+                iframe.contentDocument.body.append(element);
         });
     }
 
     function addImageDocument(parent, name, buffer, type, zipped) {
-        const iframe = document.querySelector("#viewer > iframe");
         const a = document.createElement("a");
         a.append(name);
         parent.append(a, `\n`);
         a.href = "#";
         a.addEventListener("click", event => {
             event.preventDefault();
+            const iframe = getViewerIframe();
+
             if (!zipped) {
                 iframe.src = makeBlobUrl(buffer, type);
-                // URL.revokeObjectURL(iframe.src);
+                URL.revokeObjectURL(iframe.src);
                 return;
             }
+
             const reader = ZIP.Reader(buffer);
             reader.toObject("latin1");
             reader.forEach(entry => {
