@@ -119,7 +119,7 @@ const ZIP = require("zip");
                         break;
                     case "SCP":
                         parent.append(`scp.zip.base64 `);
-                        addUnknownDocument(parent, name, buffer, "scp.zip.base64");
+                        addUnknownDocument(parent, name, buffer, "scp.zip");
                         break;
                     default:
                         parent.append(`[unknown] `);
