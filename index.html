@@ -32,8 +32,8 @@
     <label for="filesTab">files</label>
     <pre class="page" id="files"></pre>
 </nav>
-<!-- explicit about:blank prevents nesting on reload -->
-<div id="viewer"><iframe src="about:blank"></iframe></div>
+<!-- "implicit" about:blank prevents nesting on reload (we add the iframe when required) -->
+<div id="viewer"></div>
 <style>
     @font-face {
         font-family: Atkinson Hyperlegible;

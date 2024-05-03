@@ -100,25 +100,30 @@ const ZIP = require("zip");
                 const name = getPath(content);
                 const buffer = Buffer.from(content.textContent, "base64");
                 content.textContent = "";
-                switch (node.nodeValue) {
-                    case "RTF ":
+                switch (node.nodeValue.trim()) {
+                    case "RTF":
                         parent.append(`rtf.base64 `);
                         addRtfDocument(parent, name, buffer);
                         break;
-                    case "BMP ":
+                    case "BMP":
                         parent.append(`bmp.zip.base64 `);
                         addImageDocument(parent, name, buffer, "image/bmp", true);
                         break;
-                    case "JPG ":
+                    case "JPG":
                         parent.append(`jpg.zip.base64 `);
                         addImageDocument(parent, name, buffer, "image/jpeg", true);
                         break;
-                    case "PDF ":
+                    case "PDF":
                         parent.append(`pdf.zip.base64 `);
                         addImageDocument(parent, name, buffer, "application/pdf", true);
                         break;
+                    case "SCP":
+                        parent.append(`scp.zip.base64 `);
+                        addUnknownDocument(parent, name, buffer, "scp.zip.base64");
+                        break;
                     default:
-                        console.log(node.nodeValue);
+                        parent.append(`[unknown] `);
+                        addUnknownDocument(parent, name, buffer, "bin");
                         break;
                 }
                 return;
@@ -236,6 +241,26 @@ const ZIP = require("zip");
                 iframe.src = makeBlobUrl(Buffer.from(entry.getData()), type);
                 URL.revokeObjectURL(iframe.src);
             });
+        });
+    }
+
+    function addUnknownDocument(parent, name, buffer, extension) {
+        const a = document.createElement("a");
+        a.append(name);
+        parent.append(a, `\n`);
+        a.href = "#";
+        a.addEventListener("click", event => {
+            event.preventDefault();
+            const iframe = getViewerIframe();
+
+            const element = iframe.contentDocument.createElement("a");
+            element.href = makeBlobUrl(buffer, "application/octet-stream");
+            element.download = `content.${extension}`;
+            element.textContent = "download";
+
+            iframe.contentDocument.open();
+            iframe.contentDocument.close();
+            iframe.contentDocument.body.append(element);
         });
     }
 
