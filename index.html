@@ -15,6 +15,7 @@
             <li>drag and drop a patient record below
             <li>click <strong>tree</strong> to view general XML patient data
             <li>click <strong>files</strong> to view embedded document files
+            <li>click <strong>how? why?</strong> to learn more about your rights around patient records (in australia)
         </ol>
         <div>
             filename: <span id="filename"></span>
@@ -31,6 +32,22 @@
     <input type="radio" name="tab" id="filesTab">
     <label for="filesTab">files</label>
     <pre class="page" id="files"></pre>
+
+    <input type="radio" name="tab" id="howWhyTab">
+    <label for="howWhyTab">how? why?</label>
+    <div class="page" id="howWhy">
+        <p>in australia, you have the right to access your records from any medical practice you have been a patient with, under the privacy act 1988.
+
+        <ol>
+            <li>you can access your records <strong>in a form of your choosing (within reason)</strong>, for example, on paper, on a USB drive, or viewing your records in person and taking notes. <strong>if that form is too hard for them, they must work with you to find an alternative form.</strong>
+            <li><strong>the <em>request</em> may also be in any form,</strong> as long as you state what records you want (if not all of them), what form you want them in, and you can verify your identity.
+            <li><strong>they can only refuse on limited grounds,</strong> such as if doing so would endanger someone’s life, violate a court order, or otherwise affect legal proceedings.
+            <li><strong>any refusal must be given in writing,</strong> explaining why they are refusing access or were unable to agree on a format with you, along with information on how you can make a complaint with the practice and/or the OAIC.
+            <li><strong>they may charge you money for access,</strong> but only to cover the actual costs of giving you access (on a case-by-case basis), and <strong>never for just making a request.</strong>
+        </ol>
+
+        <p>more details: <a href="https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/health-service-providers/guide-to-health-privacy/chapter-4-giving-access-to-health-information">https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/health-service-providers/guide-to-health-privacy/chapter-4-giving-access-to-health-information</a>
+    </div>
 </nav>
 <!-- "implicit" about:blank prevents nesting on reload (we add the iframe when required) -->
 <div id="viewer"></div>
@@ -147,6 +164,7 @@
         font-weight: bold;
     }
     #tabLine {
+        width: 200%;
         position: absolute;
         inset: calc(var(--tab-height) - var(--tab-border)) 0 auto 0;
         border-bottom: 1px solid black;
@@ -161,6 +179,10 @@
     #redact:target ~ * .value {
         /* super secret redaction mode */
         background: black;
+    }
+    #howWhy {
+        width: 200%;
+        background: white;
     }
     .tree {
         color: #808080;
