@@ -3,8 +3,11 @@
 <nav>
     <div id="tabLine"></div>
 
-    <input type="radio" name="tab" id="importTab" checked>
-    <label for="importTab">import</label>
+    <details name="tab" data-tab="import" open><summary>import</summary><div class="clickBlocker"></div></details>
+    <details name="tab" data-tab="tree"><summary>tree</summary><div class="clickBlocker"></div></details>
+    <details name="tab" data-tab="files"><summary>files</summary><div class="clickBlocker"></div></details>
+    <details name="tab" data-tab="howWhy"><summary>how? why?</summary><div class="clickBlocker"></div></details>
+
     <div class="page" id="import">
         <header>
             <h1>worstpractice</h1>
@@ -25,16 +28,10 @@
         <div id="dnd">drop XML file here<br>or click to browse</div>
     </div>
 
-    <input type="radio" name="tab" id="treeTab">
-    <label for="treeTab">tree</label>
     <pre class="page" id="tree"></pre>
 
-    <input type="radio" name="tab" id="filesTab">
-    <label for="filesTab">files</label>
     <pre class="page" id="files"></pre>
 
-    <input type="radio" name="tab" id="howWhyTab">
-    <label for="howWhyTab">how? why?</label>
     <div class="page" id="howWhy">
         <p>in australia, you have the right to access your records from any medical practice you have been a patient with, under the privacy act 1988.
 
@@ -83,6 +80,11 @@
         font: 1em Atkinson Hyperlegible;
     }
     body {
+        --tab-border: 1px;
+        --tab-padding: 0.25em;
+        --tab-lh: 1;
+        --tab-height: calc(/* 1lh */ var(--tab-lh) * 1em + 2 * var(--tab-padding) + 2 * var(--tab-border));
+
         display: flex;
         flex-flow: row nowrap;
         margin: 0;
@@ -98,46 +100,47 @@
         margin: 0;
     }
     nav {
-        --tab-border: 1px;
-        --tab-padding: 0.25em;
-        --tab-lh: 1;
-        --tab-height: calc(/* 1lh */ var(--tab-lh) * 1em + 2 * var(--tab-padding) + 2 * var(--tab-border));
-
         flex: 1 0 0;
         position: relative;
     }
-    nav > input {
-        display: none;
-    }
-    nav > label {
+    details[name=tab] {
         display: inline-block;
         border: var(--tab-border) solid black;
-        padding: var(--tab-padding);
         line-height: var(--tab-lh);
         position: relative;
     }
-    nav > .page {
+    details[name=tab] summary {
+        padding: var(--tab-padding);
+        cursor: pointer;
+        user-select: none;
+    }
+    details[name=tab] .clickBlocker {
+        position: absolute;
+        inset: 0;
+    }
+    details[name=tab][data-tab=import][open] ~ .page:not(#import),
+    details[name=tab][data-tab=tree][open] ~ .page:not(#tree),
+    details[name=tab][data-tab=files][open] ~ .page:not(#files),
+    details[name=tab][data-tab=howWhy][open] ~ .page:not(#howWhy) {
         display: none;
+    }
+    nav > .page {
         position: absolute;
         inset: var(--tab-height) 0 0 0;
         overflow-y: scroll;
+        background: white;
     }
     nav > pre.page {
         white-space: pre-wrap;
         font-family: monospace, monospace;
         margin: 0;
     }
-    nav > :checked + label {
+    details[name=tab][open] {
         background: black;
         color: white;
     }
-    nav > :checked + label + * {
-        display: block;
-    }
-    nav > :checked + label + #import {
-        display: flex;
-    }
     #import {
+        display: flex;
         flex-flow: column nowrap;
     }
     #import > * {
@@ -172,6 +175,7 @@
     }
     #viewer {
         flex: 1 0 0;
+        margin-top: var(--tab-height);
     }
     #viewer > iframe {
         width: 100%;
@@ -181,9 +185,8 @@
         /* super secret redaction mode */
         background: black;
     }
-    #import, #howWhy {
+    #import, #tree, #howWhy {
         width: 200%;
-        background: white;
     }
     .tree {
         color: #808080;

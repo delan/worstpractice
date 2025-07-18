@@ -2,8 +2,21 @@ import {EMFJS, WMFJS, RTFJS} from "rtf.js";
 const ZIP = require("zip");
 
 (async () => {
-    // in case firefox tries to restore selected tab or file
-    document.querySelector("#importTab").click();
+    // check if the user has closed the active tab, and if so, reopen it.
+    // FIXME this has noticeable flicker. find a better way than this plus a div.clickBlocker
+    document.querySelector("nav").addEventListener("toggle", event => {
+        if (event.newState == "closed") {
+            // when switching from one details element to another, browsers dispatch the `open` state of
+            // the new element before the `closed` state of the old element, so there should never be a
+            // moment where zero details elements are active, unless the user has closed the active tab.
+            const tabs = document.querySelectorAll("details[name=tab]");
+            if ([...tabs].filter(tab => tab.open).length == 0) {
+                event.preventDefault();
+                event.target.open = true;
+            }
+        }
+    }, true);
+
     document.querySelector("#file").value = "";
 
     const filename = document.querySelector("#filename");
