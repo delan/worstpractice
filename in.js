@@ -201,12 +201,13 @@ const ZIP = require("zip");
         }
     }
 
-    function getViewerIframe() {
+    function getViewerIframe(name) {
         // in chrome, image → rtf navigations in iframes seem to be buggy,
         // so destroy and create the iframe anew each time we view something
         const viewer = document.querySelector("#viewer");
-        viewer.innerHTML = `<iframe src="about:blank"></iframe>`;
-        return viewer.firstChild;
+        viewer.innerHTML = `<strong></strong><iframe src="about:blank"></iframe>`;
+        viewer.childNodes[0].innerText = name;
+        return viewer.childNodes[1];
     }
 
     function addRtfDocument(parent, name, buffer) {
@@ -220,7 +221,7 @@ const ZIP = require("zip");
             console.log(rtf.metadata());
             const elements = await rtf.render();
 
-            const iframe = getViewerIframe();
+            const iframe = getViewerIframe(name);
             iframe.contentDocument.open();
 
             // remove big margins for readability
@@ -240,7 +241,7 @@ const ZIP = require("zip");
         a.href = "#";
         a.addEventListener("click", event => {
             event.preventDefault();
-            const iframe = getViewerIframe();
+            const iframe = getViewerIframe(name);
 
             if (!zipped) {
                 iframe.src = makeBlobUrl(buffer, type);
@@ -264,7 +265,7 @@ const ZIP = require("zip");
         a.href = "#";
         a.addEventListener("click", event => {
             event.preventDefault();
-            const iframe = getViewerIframe();
+            const iframe = getViewerIframe(name);
 
             const element = iframe.contentDocument.createElement("a");
             element.href = makeBlobUrl(buffer, "application/octet-stream");
